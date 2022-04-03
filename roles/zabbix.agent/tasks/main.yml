@@ -1,0 +1,66 @@
+---
+##### Install zabbix-agent
+
+#Check OS
+- name: check OS
+  debug: msg={{ansible_distribution}}-{{ansible_distribution_version}}
+
+### Centos 7
+- name: disable SELinux
+  selinux:
+    state: disabled
+  when: ansible_os_family == "RedHat"
+
+
+- name: Add Repo centOS 7 rpm 
+  yum: "{{ centos7_rpm }}"
+  when: ansible_os_family == "RedHat"
+
+
+- name: Centos 7 Install zabbix
+  yum:
+    name: zabbix-agent
+    enablerepo: zabbix
+    update_cache: true
+    state: latest
+  when:
+    ansible_os_family == "RedHat"
+  notify:
+    - change zabbix_agentd.conf Hostname
+    - change zabbix_agentd.conf ServerActive
+    - change zabbix_agentd.conf Server
+    - change zabbix_agentd.conf LogRemoteCommands
+    - zabbix systemd
+
+
+### Ubuntu 20.04 focal
+- name: Download Zabbix DEB Ubuntu 20.04
+  get_url:
+    url: "{{ ubuntu20_04_deb }}" 
+    dest: "/tmp/{{ ubuntu20_04_file }}"
+  when: ansible_distribution_release == 'focal'
+
+
+- name: install zabbix deb for Ubuntu 20.04
+  apt: 
+    deb: "/tmp/{{ ubuntu20_04_file }}"
+  when: 
+    ansible_distribution_release == 'focal'
+
+
+- name: Start Service Zabbix Ubuntu 20.04
+  apt:
+    name: zabbix-agent
+    state: latest
+  when:
+    ansible_os_family == "Debian"
+  notify:
+    - change zabbix_agentd.conf Hostname
+    - change zabbix_agentd.conf ServerActive
+    - change zabbix_agentd.conf Server
+    - change zabbix_agentd.conf LogRemoteCommands
+    - zabbix systemd
+
+
+
+
